@@ -20,7 +20,7 @@ jobs:
   build:
     runs-on: ubuntu-24.04
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install Mono compiler
         run: |
@@ -28,7 +28,11 @@ jobs:
           sudo apt-get install -y -qq --no-install-recommends mono-devel unzip
 
       - name: Reference assemblies (NuGet + stub)
-        run: ./ci/fetch-refs.sh "$RUNNER_TEMP/refs"
+        run: |
+          set -o pipefail
+          ./ci/fetch-refs.sh "$RUNNER_TEMP/refs" 2>&1 | tee "$RUNNER_TEMP/refs.log" \
+            || { echo "::error title=fetch-refs::$(tail -n 15 "$RUNNER_TEMP/refs.log" | tr '\n' '|')"; exit 1; }
+          echo "::notice title=refs::$(grep -E '^  ' "$RUNNER_TEMP/refs.log" | tr '\n' ';')"
 
       - name: Version
         id: ver
@@ -39,9 +43,12 @@ jobs:
           cat "$RUNNER_TEMP/notes.md"
 
       - name: Build & package
-        run: GAME_DIR="$RUNNER_TEMP/refs" ./scripts/package.sh
+        run: |
+          set -o pipefail
+          GAME_DIR="$RUNNER_TEMP/refs" ./scripts/package.sh 2>&1 | tee "$RUNNER_TEMP/build.log" \
+            || { echo "::error title=build::$(grep -E 'error|Error' "$RUNNER_TEMP/build.log" | head -n 10 | tr '\n' '|')"; exit 1; }
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v5
         with:
           name: SoCPixelUpscale_v${{ steps.ver.outputs.version }}
           path: dist/SoCPixelUpscale_v${{ steps.ver.outputs.version }}.zip

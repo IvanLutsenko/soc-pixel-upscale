@@ -3,7 +3,7 @@
 #   <out>/SongsOfConquest_Data/Managed : Mono BCL + UnityEngine modules (NuGet) + Unity.InputSystem stub
 #   <out>/BepInEx/core                 : BepInEx.dll + 0Harmony.dll (NuGet)
 # Packages come from the BepInEx NuGet feed; highest version matching the prefix is used.
-set -euo pipefail
+set -euxo pipefail
 OUT="${1:?usage: fetch-refs.sh <out-dir>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FEED="https://nuget.bepinex.dev/v3"
