@@ -1,0 +1,61 @@
+name: Build & release
+
+# Every push to main builds the zip. If Plugin.Version in src/SoCPixelUpscale.cs has no GitHub release yet,
+# a release v<version> is created with that zip and the matching CHANGELOG.md section.
+# Versions with a suffix (1.2.0-beta.1) are published as pre-releases.
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: release-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  build:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Mono compiler
+        run: |
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends mono-devel unzip
+
+      - name: Reference assemblies (NuGet + stub)
+        run: ./ci/fetch-refs.sh "$RUNNER_TEMP/refs"
+
+      - name: Version
+        id: ver
+        run: |
+          V=$(grep -oP 'const string Version = "\K[^"]+' src/SoCPixelUpscale.cs)
+          echo "version=$V" >> "$GITHUB_OUTPUT"
+          ./ci/release-notes.sh "$V" > "$RUNNER_TEMP/notes.md"
+          cat "$RUNNER_TEMP/notes.md"
+
+      - name: Build & package
+        run: GAME_DIR="$RUNNER_TEMP/refs" ./scripts/package.sh
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SoCPixelUpscale_v${{ steps.ver.outputs.version }}
+          path: dist/SoCPixelUpscale_v${{ steps.ver.outputs.version }}.zip
+
+      - name: Publish release
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        env:
+          GH_TOKEN: ${{ github.token }}
+          V: ${{ steps.ver.outputs.version }}
+        run: |
+          if gh release view "v$V" >/dev/null 2>&1; then
+            echo "Release v$V already exists - nothing to publish. Bump Plugin.Version to release."
+            exit 0
+          fi
+          PRE=""; [[ "$V" == *-* ]] && PRE="--prerelease"
+          gh release create "v$V" "dist/SoCPixelUpscale_v$V.zip" \
+            --target "$GITHUB_SHA" --title "v$V" --notes-file "$RUNNER_TEMP/notes.md" $PRE

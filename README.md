@@ -107,3 +107,15 @@ GAME_DIR="/path/to/SongsOfConquest" ./scripts/package.sh   # -> dist/SoCPixelUps
 
 `GAME_DIR` must contain `SongsOfConquest_Data/Managed` and an installed `BepInEx/core`.
 The version lives in one place: `Plugin.Version` in `src/SoCPixelUpscale.cs`.
+
+## Releasing
+
+Releases are automatic ([`.github/workflows/release.yml`](.github/workflows/release.yml)):
+
+1. Bump `Plugin.Version` and add a `## [x.y.z]` section to `CHANGELOG.md`.
+2. Push to `main`.
+
+CI builds the plugin without the game (Unity and BepInEx reference assemblies from the
+[BepInEx NuGet feed](https://nuget.bepinex.dev), a small compile-time stub for `Unity.InputSystem` in `ci/stubs`),
+then creates the tag `vx.y.z` and a GitHub release with the zip and the changelog section.
+A version with a suffix (`1.2.0-beta.1`) becomes a pre-release. Pushes that don't change the version only build.

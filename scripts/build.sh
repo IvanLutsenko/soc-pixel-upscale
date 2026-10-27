@@ -7,7 +7,7 @@ M="$GAME_DIR/SongsOfConquest_Data/Managed"
 B="${BEPINEX_CORE:-$GAME_DIR/BepInEx/core}"
 refs=()
 for d in mscorlib System System.Core netstandard UnityEngine UnityEngine.CoreModule UnityEngine.ImageConversionModule \
-         UnityEngine.InputLegacyModule Unity.InputSystem UnityEngine.UI UnityEngine.UIModule UnityEngine.AssetBundleModule \
+         UnityEngine.InputLegacyModule Unity.InputSystem UnityEngine.UIModule UnityEngine.AssetBundleModule \
          UnityEngine.IMGUIModule UnityEngine.TextRenderingModule; do refs+=("-r:$M/$d.dll"); done
 refs+=("-r:$B/BepInEx.dll" "-r:$B/0Harmony.dll")
 mkdir -p "$ROOT/dist"
