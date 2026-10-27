@@ -48,6 +48,11 @@ jobs:
           GAME_DIR="$RUNNER_TEMP/refs" ./scripts/package.sh 2>&1 | tee "$RUNNER_TEMP/build.log" \
             || { echo "::error title=build::$(grep -E 'error|Error' "$RUNNER_TEMP/build.log" | head -n 10 | tr '\n' '|')"; exit 1; }
 
+      - name: Reference fingerprint
+        run: |
+          pip install -q --break-system-packages dnfile
+          echo "::notice title=refsig::$(python3 ci/refsig.py dist/SoCPixelUpscale.dll)"
+
       - uses: actions/upload-artifact@v5
         with:
           name: SoCPixelUpscale_v${{ steps.ver.outputs.version }}
