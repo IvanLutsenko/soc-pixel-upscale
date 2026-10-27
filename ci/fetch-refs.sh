@@ -34,9 +34,9 @@ print(sorted(vs,key=key)[-1])" "$prefix")
 echo "NuGet packages:" >&2
 U=$(fetch UnityEngine.Modules "$UNITY_PREFIX") || exit 1
 find "$U" -name 'UnityEngine*.dll' -exec cp {} "$M/" \;
-B=$(fetch BepInEx.Core "$BEPINEX_PREFIX") || exit 1
+B=$(fetch BepInEx.BaseLib "$BEPINEX_PREFIX") || exit 1
 BD=$(find "$B" -name 'BepInEx.dll' | sort | head -1)
-[ -n "$BD" ] || { echo "BepInEx.dll not in BepInEx.Core: $(cd "$B" && find . -name '*.dll' | tr '\n' ' ')" >&2; exit 1; }
+[ -n "$BD" ] || { echo "BepInEx.dll not in BepInEx.BaseLib: $(cd "$B" && find . -name '*.dll' | tr '\n' ' ')" >&2; exit 1; }
 cp "$BD" "$C/"
 HD=$(find "$B" -name 0Harmony.dll | sort | head -1)
 if [ -z "$HD" ]; then
