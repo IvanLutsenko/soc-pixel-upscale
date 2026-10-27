@@ -1,0 +1,4 @@
+dist/
+*.dll
+*.zip
+cache/
