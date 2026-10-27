@@ -3,7 +3,7 @@
 #   <out>/SongsOfConquest_Data/Managed : Mono BCL + UnityEngine modules (NuGet) + Unity.InputSystem stub
 #   <out>/BepInEx/core                 : BepInEx.dll + 0Harmony.dll (NuGet)
 # Packages come from the BepInEx NuGet feed; highest version matching the prefix is used.
-set -euxo pipefail
+set -euo pipefail
 OUT="${1:?usage: fetch-refs.sh <out-dir>}"
 ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 FEED="https://nuget.bepinex.dev/v3"
@@ -50,7 +50,7 @@ mcs -target:library -nostdlib -langversion:7 -out:"$M/Unity.InputSystem.dll" -r:
 
 for f in mscorlib System System.Core UnityEngine.CoreModule UnityEngine.ImageConversionModule \
          UnityEngine.InputLegacyModule Unity.InputSystem UnityEngine.UIModule UnityEngine.AssetBundleModule \
-         UnityEngine.IMGUIModule UnityEngine.TextRenderingModule; do test -f "$M/$f.dll" || { echo "missing $f.dll" >&2; exit 1; }; done
+         UnityEngine.IMGUIModule UnityEngine.TextRenderingModule; do test -f "$M/$f.dll" || { echo "missing $f.dll; have: $(ls "$M" | tr '\n' ' '); pkg: $(cd "$TMP" && find . -maxdepth 4 | grep -v '/_rels\|Content_Types\|/package/' | head -40 | tr '\n' ' ')" >&2; exit 1; }; done
 test -f "$C/BepInEx.dll" && test -f "$C/0Harmony.dll"
 rm -rf "$TMP"
 echo "References ready in $OUT" >&2
