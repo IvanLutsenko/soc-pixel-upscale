@@ -12,8 +12,7 @@ BEPINEX_PREFIX="${BEPINEX_PREFIX:-5.4.}"
 M="$OUT/SongsOfConquest_Data/Managed"; C="$OUT/BepInEx/core"; TMP="$OUT/.pkg"
 mkdir -p "$M" "$C" "$TMP"
 
-echo "feed: $(curl -fsSL "$FEED/index.json" | head -c 600 | tr -d '\n')" >&2
-base=$(curl -fsSL "$FEED/index.json" | python3 -c "import json,sys;print([r['@id'] for r in json.load(sys.stdin)['resources'] if r['@type'].startswith('PackageBaseAddress')][0])")
+base=$(curl -fsSL "$FEED/index.json" | python3 -c "import json,sys;print([r['@id'] for r in json.load(sys.stdin)['resources'] if r['@type'].startswith('PackageBaseAddress')][0].rstrip('/')+'/')")
 
 fetch() { # id prefix [package-base-url] -> unpacked dir
   local id=$(echo "$1" | tr A-Z a-z) prefix="$2" ver base="${3:-$base}"
