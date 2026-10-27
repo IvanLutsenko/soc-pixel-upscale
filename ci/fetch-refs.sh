@@ -37,8 +37,6 @@ if [ -z "$HD" ]; then
   H=$(fetch HarmonyX "2." "https://api.nuget.org/v3-flatcontainer/")
   HD=$(find "$H" -path '*net4*' -name 0Harmony.dll | sort | head -1)
 fi
-: $(find "$H" -path '*net4*' -name 0Harmony.dll | sort | head -1)
-[ -n "$HD" ] || HD=$(find "$H" -name 0Harmony.dll | sort | head -1)
 [ -n "$HD" ] || { echo "0Harmony.dll not found" >&2; exit 1; }
 cp "$HD" "$C/"
 
@@ -50,7 +48,7 @@ cp "$MONO/Facades/netstandard.dll" "$M/"
 # Input System: compile-time stub (the real DLL ships with the game, not on NuGet)
 mcs -target:library -nostdlib -langversion:7 -out:"$M/Unity.InputSystem.dll" -r:"$M/mscorlib.dll" "$ROOT/ci/stubs/Unity.InputSystem.cs"
 
-for f in mscorlib System System.Core netstandard UnityEngine UnityEngine.CoreModule UnityEngine.ImageConversionModule \
+for f in mscorlib System System.Core UnityEngine.CoreModule UnityEngine.ImageConversionModule \
          UnityEngine.InputLegacyModule Unity.InputSystem UnityEngine.UIModule UnityEngine.AssetBundleModule \
          UnityEngine.IMGUIModule UnityEngine.TextRenderingModule; do test -f "$M/$f.dll" || { echo "missing $f.dll" >&2; exit 1; }; done
 test -f "$C/BepInEx.dll" && test -f "$C/0Harmony.dll"

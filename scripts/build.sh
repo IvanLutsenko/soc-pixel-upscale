@@ -6,9 +6,10 @@ ROOT="$(cd "$(dirname "$0")/.." && pwd)"
 M="$GAME_DIR/SongsOfConquest_Data/Managed"
 B="${BEPINEX_CORE:-$GAME_DIR/BepInEx/core}"
 refs=()
-for d in mscorlib System System.Core netstandard UnityEngine UnityEngine.CoreModule UnityEngine.ImageConversionModule \
+for d in mscorlib System System.Core UnityEngine.CoreModule UnityEngine.ImageConversionModule \
          UnityEngine.InputLegacyModule Unity.InputSystem UnityEngine.UIModule UnityEngine.AssetBundleModule \
          UnityEngine.IMGUIModule UnityEngine.TextRenderingModule; do refs+=("-r:$M/$d.dll"); done
+for d in netstandard UnityEngine; do [ -f "$M/$d.dll" ] && refs+=("-r:$M/$d.dll"); done  # optional facades
 refs+=("-r:$B/BepInEx.dll" "-r:$B/0Harmony.dll")
 mkdir -p "$ROOT/dist"
 mcs -target:library -nostdlib -langversion:7 -optimize -out:"$ROOT/dist/SoCPixelUpscale.dll" "${refs[@]}" "$ROOT/src/SoCPixelUpscale.cs"
