@@ -12,6 +12,7 @@ BEPINEX_PREFIX="${BEPINEX_PREFIX:-5.4.}"
 M="$OUT/SongsOfConquest_Data/Managed"; C="$OUT/BepInEx/core"; TMP="$OUT/.pkg"
 mkdir -p "$M" "$C" "$TMP"
 
+echo "feed: $(curl -fsSL "$FEED/index.json" | head -c 600 | tr -d '\n')" >&2
 base=$(curl -fsSL "$FEED/index.json" | python3 -c "import json,sys;print([r['@id'] for r in json.load(sys.stdin)['resources'] if r['@type'].startswith('PackageBaseAddress')][0])")
 
 fetch() { # id prefix [package-base-url] -> unpacked dir
@@ -23,18 +24,22 @@ key=lambda v:[int(x) if x.isdigit() else 0 for x in re.split(r'[.]',v)]
 print(sorted(vs,key=key)[-1])" "$prefix")
   echo "  $1 $ver" >&2
   curl -fsSL -o "$TMP/$id.nupkg" "${base}${id}/${ver}/${id}.${ver}.nupkg"
+  if ! unzip -tq "$TMP/$id.nupkg" >/dev/null 2>&1; then
+    echo "NOT A ZIP: ${base}${id}/${ver}/${id}.${ver}.nupkg size=$(stat -c%s "$TMP/$id.nupkg") head=$(head -c 120 "$TMP/$id.nupkg" | od -c | head -3 | tr -s ' ' | tr '\n' ' ')" >&2
+    exit 1
+  fi
   rm -rf "$TMP/$id"; mkdir -p "$TMP/$id"; (cd "$TMP/$id" && unzip -q ../$id.nupkg)
   echo "$TMP/$id"
 }
 
 echo "NuGet packages:" >&2
-U=$(fetch UnityEngine.Modules "$UNITY_PREFIX")
+U=$(fetch UnityEngine.Modules "$UNITY_PREFIX") || exit 1
 find "$U" -name 'UnityEngine*.dll' -exec cp {} "$M/" \;
-B=$(fetch BepInEx.Core "$BEPINEX_PREFIX")
+B=$(fetch BepInEx.Core "$BEPINEX_PREFIX") || exit 1
 find "$B" -name 'BepInEx.dll' -exec cp {} "$C/" \;
 HD=$(find "$B" -name 0Harmony.dll | sort | head -1)
 if [ -z "$HD" ]; then
-  H=$(fetch HarmonyX "2." "https://api.nuget.org/v3-flatcontainer/")
+  H=$(fetch HarmonyX "2." "https://api.nuget.org/v3-flatcontainer/") || exit 1
   HD=$(find "$H" -path '*net4*' -name 0Harmony.dll | sort | head -1)
 fi
 [ -n "$HD" ] || { echo "0Harmony.dll not found" >&2; exit 1; }
