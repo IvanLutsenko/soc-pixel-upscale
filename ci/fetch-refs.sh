@@ -14,8 +14,8 @@ mkdir -p "$M" "$C" "$TMP"
 
 base=$(curl -fsSL "$FEED/index.json" | python3 -c "import json,sys;print([r['@id'] for r in json.load(sys.stdin)['resources'] if r['@type'].startswith('PackageBaseAddress')][0])")
 
-fetch() { # id prefix -> unpacked dir
-  local id=$(echo "$1" | tr A-Z a-z) prefix="$2" ver
+fetch() { # id prefix [package-base-url] -> unpacked dir
+  local id=$(echo "$1" | tr A-Z a-z) prefix="$2" ver base="${3:-$base}"
   ver=$(curl -fsSL "${base}${id}/index.json" | python3 -c "
 import json,sys,re
 p=sys.argv[1]; vs=[v for v in json.load(sys.stdin)['versions'] if v.startswith(p) and '-' not in v]
@@ -32,9 +32,14 @@ U=$(fetch UnityEngine.Modules "$UNITY_PREFIX")
 find "$U" -name 'UnityEngine*.dll' -exec cp {} "$M/" \;
 B=$(fetch BepInEx.Core "$BEPINEX_PREFIX")
 find "$B" -name 'BepInEx.dll' -exec cp {} "$C/" \;
-H=$(fetch HarmonyX "2.")
-HD=$(find "$H" -path '*net4*' -name 0Harmony.dll | sort | head -1)
+HD=$(find "$B" -name 0Harmony.dll | sort | head -1)
+if [ -z "$HD" ]; then
+  H=$(fetch HarmonyX "2." "https://api.nuget.org/v3-flatcontainer/")
+  HD=$(find "$H" -path '*net4*' -name 0Harmony.dll | sort | head -1)
+fi
+: $(find "$H" -path '*net4*' -name 0Harmony.dll | sort | head -1)
 [ -n "$HD" ] || HD=$(find "$H" -name 0Harmony.dll | sort | head -1)
+[ -n "$HD" ] || { echo "0Harmony.dll not found" >&2; exit 1; }
 cp "$HD" "$C/"
 
 # Mono base class library (Unity's Mono profile is .NET 4.x compatible)
